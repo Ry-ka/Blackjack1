@@ -1,0 +1,29 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  height: 100vh; /* Use the full viewport height */
+  width: 100vw;
+  background-color: black; /* The green background */
+}
+
+.info {
+  grid-area: info;
+  /* Styles for the info section */
+}
+
+.dealer {
+  grid-area: dealer;
+  /* Styles for the dealer's cards */
+}
+
+.player {
+  grid-area: player;
+  /* Styles for the player's cards */
+}
+
+.controls {
+  grid-area: controls;
+  /* Styles for the game controls */
+}

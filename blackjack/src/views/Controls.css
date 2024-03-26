@@ -1,0 +1,19 @@
+/* Controls.css */
+
+.controls {
+  position: absolute;
+  right: 100px;
+  bottom: 50px;
+  display: flex;
+  flex-direction: row;
+  gap: 10px; /* Adjust the space between buttons */
+}
+
+button {
+  /* Style your buttons here */
+  padding: 10px;
+  border: none;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  /* Add hover effect, transition, or anything else you'd like */
+}

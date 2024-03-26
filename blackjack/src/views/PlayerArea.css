@@ -1,0 +1,27 @@
+.player-area {
+  display: flex;
+  justify-content: center;
+  flex-direction: column; /* This will stack children vertically in order */
+  align-items: center; /* This will center the children horizontally */
+  /* Ensure there's enough space for the total */
+  padding-top: 20px; /* Adjust this value to give space for the total above the cards */
+  
+}
+
+.player-area .total {
+  margin-bottom: 16px; /* Adds some space between the total and the cards */
+}
+
+
+.player-area .cards {
+  display: flex; /* This will line up the children (cards) in a row */
+  justify-content: center; /* This will center the cards in the container */
+  transform: translateX(-100%);
+}
+
+.total {
+  margin: 10px 0;
+  font-size: 1.5rem;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}

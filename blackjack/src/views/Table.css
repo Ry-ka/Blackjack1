@@ -1,0 +1,13 @@
+.table {
+  position: relative;
+  background: green;
+  width: 90vw;
+  height: 80vh;
+  margin: auto;
+  border-radius: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Adjusts the space distribution */
+  align-items: center;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+}

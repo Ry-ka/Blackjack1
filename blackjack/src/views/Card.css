@@ -1,0 +1,55 @@
+.card {
+  width: 120px; /* Width of the cards */
+  height: auto; /* Keep height proportional */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+  border-radius: 10px; /* Rounded corners for aesthetics */
+  overflow: hidden; /* Prevents content from spilling out */
+  background: #fff; /* Card background */
+  
+  position: relative; /* Needed for z-index to work correctly */
+  z-index: 1; /* Start with a base z-index */
+  flex: 0 0 auto; /* Prevent card from growing or shrinking */
+}
+
+
+.card img {
+  width: 100%; /* Image fills the card width */
+  height: 100%; /* Image height is proportional */
+  object-fit: cover; /* Ensures the image covers the area without stretching */
+}
+
+/* To ensure that each subsequent card has a higher z-index than the one before it */
+.cards {
+  display: flex; /* Aligns cards in a row */
+}
+
+.cards .card:not(:first-child) {
+  z-index: 2; /* Cards that are not the first child have higher z-index */
+}
+
+/* Use this class for the dealer's cards container */
+.dealer-cards {
+  display: flex;
+  justify-content: center;
+}
+
+/* Apply this class to each card in the dealer's hand */
+.dealer-card {
+  width: 120px; /* Width of the cards */
+  height: auto; /* Keep height proportional */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+  border-radius: 10px; /* Rounded corners for aesthetics */
+  background: #fff; /* Card background */
+  position: relative; /* Needed for z-index to work correctly */
+}
+
+/* Dealer card image styling */
+.dealer-card img {
+  width: 100%; /* Image fills the card width */
+  height: auto; /* Image height is proportional */
+  object-fit: cover; /* Ensures the image covers the area without stretching */
+}
+
+.player-card {
+  margin-right: -100px; /* Adjust this value to overlap cards as desired */
+}

@@ -1,0 +1,20 @@
+.dealer-area {
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Stacks children (cards and total) vertically */
+  align-items: center; /* Centers children horizontally */
+  justify-content: flex-start; /* Aligns children to the top of the container */
+  height: 100%; /* Give it a height to allow for proper spacing */
+}
+
+.dealer-area .cards {
+  display: flex; /* This will line up the children (cards) in a row */
+  justify-content: center; /* This will center the cards in the container */
+}
+
+
+
+/* Make sure the last card doesn't have extra margin on the right */
+.dealer-cards .dealer-card:last-child {
+  margin-right: 0;
+}
