@@ -8,102 +8,122 @@ import './App.css'
 import Controls from './views/Controls';
 import { PlayerAction } from './types/PlayerActionType';
 import { Dealer } from './models/Dealer';
-import { Deck } from './models/Deck';
 import { Player } from './models/Player';
+
+type GameState = {
+  playerHands: Array<{
+    cards: Card[];
+    bet: number;
+  }>;
+
+  dealerHand: Card[];
+  playerTotal: number;
+  dealerTotal: number;
+  isPlayerTurnActive: boolean;
+};
 
 const App: React.FC = () => {
   const [game, setGame] = useState<Game>(new Game(1, 1000));
-  const [playerHand, setPlayerHand] = useState<Card[]>([]);
-  const [dealerHand, setDealerHand] = useState<Card[]>([]);
-  const [isPlayerTurnActive, setIsPlayerTurnActive] = useState<boolean>(false);
+  const [gameState, setGameState] = useState<GameState>({
+    playerHands: [{
+      cards: [],
+      bet: 0
+    }],
+    dealerHand: [],
+    playerTotal: 0,
+    dealerTotal: 0,
+    isPlayerTurnActive: false
+  });
   const [betSliderValue, setBetSliderValue] = useState<number>(15);
-  const [playerTotal, setPlayerTotal] = useState<number>(0);
-  const [dealerTotal, setDealerTotal] = useState<number>(0);
 
 
   const handlePlayerAction = (action: PlayerAction) => {
-    // Invoke the action on the game object
     game.playerAction(action);
-  
-    // Trigger a React state update to re-render the component with the new game state
-    // Use a functional state update to make sure you're working with the most current state
+
     setGame(prevGame => {
-      // Create a new instance of the game (or clone the state as needed)
-      // This is necessary to ensure React detects a state change and updates the component
-      const newGame = new Game(prevGame.players.length, prevGame.players[0].currentBalance);
-      // Replicate the state from the existing game object to the new one
-      Object.assign(newGame, prevGame);
-      // Clone players if they have methods that need to be preserved
-      newGame.players = prevGame.players.map(player => Object.assign(new Player(player.currentBalance), player));
-      // Clone dealer and deck if necessary
-      newGame.dealer = Object.assign(new Dealer(), prevGame.dealer);
-      newGame.deck = Object.assign(new Deck(), prevGame.deck);
-  
-      return newGame;
-    });
-  
-    // Update the hands in the state
-    setPlayerHand([...game.players[game.currentPlayerIndex].hands[0].cards]);
-    setDealerHand([...game.dealer.getHand()]);
-    setPlayerTotal(game.players[game.currentPlayerIndex].calculateHandTotal(0));
-    setDealerTotal(game.dealer.calculateHandValue());
+        // Clone the game state to ensure immutability
+        const newGame = new Game(prevGame.players.length, prevGame.players[0].currentBalance, false);
+        Object.assign(newGame, prevGame);
+        newGame.players = prevGame.players.map(player => {
+            const clonedPlayer = Object.assign(new Player(player.currentBalance), player);
+            clonedPlayer.hands = player.hands.map(hand => ({
+                ...hand,
+                cards: [...hand.cards],
+            }));
+            return clonedPlayer;
+        });
+        newGame.dealer = Object.assign(new Dealer(), prevGame.dealer);
+        newGame.deck = prevGame.deck.clone();
 
-    const currentPlayer = game.players[game.currentPlayerIndex];
-  
-    // If the player has busted or decided to stand, the player's turn is over
-    if (currentPlayer.hasBusted(0) || action === 'stand') {
-      setIsPlayerTurnActive(false);
-  
-      // If this is the last player, handle the dealer's turn
-      if (game.currentPlayerIndex >= game.players.length - 1) {
-        // Invoke the dealer's turn
-        game.handleDealerTurn();
-        // Update the dealer's hand in the state
-        setDealerHand([...game.dealer.getHand()]);
-        // Since state updates are asynchronous, we may need to use a callback here to make sure they are processed
-      }
-    }
-  };
-  
-  
+        // Update the consolidated game state
+        const updatedGameState: GameState = {
+            playerHands: [{
+              cards: [...newGame.players[newGame.currentPlayerIndex].hands[0].cards],
+              bet: newGame.players[newGame.currentPlayerIndex].hands[0].bet
+            }],
+            dealerHand: [...newGame.dealer.getHand()],
+            playerTotal: newGame.players[newGame.currentPlayerIndex].calculateHandTotal(0),
+            dealerTotal: newGame.dealer.calculateHandValue(),
+            isPlayerTurnActive: !newGame.players[newGame.currentPlayerIndex].hasBusted(0)
+        };
 
-  const submitBet = () => {
-    setGame(prevGame => {
-      // Clone the previous game state to ensure immutability
-      const newGame = new Game(prevGame.players.length, prevGame.players[0].currentBalance);
-  
-      // Use methods to transfer state from the old game instance to the new one
-      // For example, clone the deck, dealer, and player states
-      
-      const currentPlayer = newGame.players[0];
-      
-      if (betSliderValue <= currentPlayer.currentBalance && betSliderValue >= 15) {
-        currentPlayer.placeBet(betSliderValue, 0);
-  
-        try {
-          console.log("before");
-          newGame.startNewRound();
-          console.log("after");
-          
-          // Update the React state with the new game state
-          setPlayerHand([...newGame.players[newGame.currentPlayerIndex].hands[0].cards]);
-          setDealerHand([...newGame.dealer.getHand()]);
-          setPlayerTotal(newGame.players[newGame.currentPlayerIndex].calculateHandTotal(0));
-          setDealerTotal(newGame.dealer.calculateHandValue());
+        setGameState(updatedGameState);
 
-          setIsPlayerTurnActive(true);
-
-          return newGame;
-        } catch (error) {
-          console.error(error);
-          return prevGame;
+        if (!updatedGameState.isPlayerTurnActive || action === 'stand') {
+            if (newGame.currentPlayerIndex >= newGame.players.length - 1) {
+                newGame.handleDealerTurn();
+                updatedGameState.dealerHand = [...newGame.dealer.getHand()];
+                setGameState(updatedGameState); // Update dealer's hand after dealer's turn
+            }
         }
-      } else {
-        alert("Invalid bet amount.");
-        return prevGame;
-      }
+
+        return newGame;
     });
-  };
+};
+
+
+const submitBet = () => {
+  setGame(prevGame => {
+      // Clone the previous game state to ensure immutability
+      const newGame = new Game(prevGame.players.length, prevGame.players[0].currentBalance, false);
+      newGame.deck = prevGame.deck.clone();
+      newGame.players[0].hands[0].bet = prevGame.players[0].hands[0].bet;
+
+      const currentPlayer = newGame.players[0];
+
+      if (betSliderValue <= currentPlayer.currentBalance && betSliderValue >= 15) {
+          currentPlayer.placeBet(betSliderValue, 0);
+
+          try {
+              newGame.startNewRound();
+
+              // Calculate the new state after starting a new round
+              const updatedGameState = {
+                playerHands: [{
+                  cards: [...newGame.players[newGame.currentPlayerIndex].hands[0].cards],
+                  bet: betSliderValue
+                }],
+                dealerHand: [...newGame.dealer.getHand()],
+                playerTotal: newGame.players[newGame.currentPlayerIndex].calculateHandTotal(0),
+                dealerTotal: newGame.dealer.calculateHandValue(),
+                isPlayerTurnActive: true
+              };
+
+              // Update the gameState with the new values
+              setGameState(updatedGameState);
+
+              return newGame;
+          } catch (error) {
+              console.error(error);
+              return prevGame; // Keep the previous state if there's an error
+          }
+      } else {
+          alert("Invalid bet amount.");
+          return prevGame;
+      }
+  });
+};
+
   
   
 
@@ -116,34 +136,44 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-    const newGame = new Game(1, 1000); // For example: 1 player, $1000 starting balance
-    setGame(newGame);
+    const currentPlayer = game.players[game.currentPlayerIndex];
 
-    // Assuming you want to display the player's cards:
-    setPlayerHand(newGame.players[0].hands[0].cards);
-    setDealerHand(newGame.dealer.getHand());
-  }, []);
+    const updatedState: GameState = {
+      playerHands: currentPlayer.hands.map(hand => ({
+        cards: [...hand.cards], // Clone the cards for immutability
+        bet: hand.bet, // Take the bet from each hand
+      })),
+      dealerHand: [...game.dealer.getHand()],
+      playerTotal: currentPlayer.calculateHandTotal(0),
+      dealerTotal: game.dealer.calculateHandValue(),
+      isPlayerTurnActive: !currentPlayer.hasBusted(0) && currentPlayer.hands[0].cards.length > 0
+    };
+
+    setGameState(updatedState);
+  }, [game]);
 
   return (
     <div className="app">
       <Table 
-        dealerCards={dealerHand} 
-        playerCards={playerHand}
-        dealerTotal={dealerTotal}
-        playerTotal={playerTotal}
-        // Optional: message={...}
+        dealerCards={gameState.dealerHand} 
+        playerCards={gameState.playerHands[0].cards}
+        dealerTotal={gameState.dealerTotal}
+        playerTotal={gameState.playerTotal}
+        bet = {gameState.playerHands[0].bet}
       />
       <div className="playerInteraction">
         <div className="bettingControls">
-        <input
-          type="range"
-          min="15"
-          max={game.players[0].currentBalance.toString()}
-          value={betSliderValue.toString()}
-          onChange={handleSliderChange}
-        />
-        <button onClick={submitBet}>Submit Bet</button>
-        <Controls onPlayerAction={handlePlayerAction} isPlayerTurnActive={isPlayerTurnActive}/>
+          <p className="current-balance">Current Balance: ${game.players[0].currentBalance}</p> {/* Display current balance */}
+          <input
+            type="range"
+            min="15"
+            max={game.players[0].currentBalance.toString()}
+            value={betSliderValue.toString()}
+            onChange={handleSliderChange}
+          />
+          <p className="bet-amount">Bet Amount: ${betSliderValue}</p>
+          <button onClick={submitBet}>Submit Bet</button>
+          <Controls onPlayerAction={handlePlayerAction} isPlayerTurnActive={gameState.isPlayerTurnActive}/>
         </div>
       </div>
     </div>

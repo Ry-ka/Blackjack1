@@ -15,7 +15,8 @@ const Controls: React.FC<ControlsProps> = ({ onPlayerAction, isPlayerTurnActive 
     <div className="controls">
       <button onClick={() => onPlayerAction('hit')} disabled={!isPlayerTurnActive}>Hit</button>
       <button onClick={() => onPlayerAction('stand')} disabled={!isPlayerTurnActive}>Stand</button>
-      <button>Double Down</button>
+      <button disabled={!isPlayerTurnActive}>Split</button>
+      <button disabled={!isPlayerTurnActive}>Double Down</button>
       {/* Add more buttons as needed */}
     </div>
   );

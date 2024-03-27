@@ -2,13 +2,24 @@ import { Card, Value, Suit, VALUES, SUITS } from "../types/CardType"
 
 export class Deck {
   public cards: Card[];
+  static shuffleCount: number = 0;
 
-  constructor(deckCount: number = 6) {
+  constructor(deckCount: number = 6, shouldShuffle: boolean = true) {
     this.cards = [];
     this.initializeDeck(deckCount);
-    this.shuffle();
+    if (shouldShuffle) {
+      this.shuffle();
+    }
+    
+    
   }
 
+  clone() {
+    const newDeck = new Deck(6, false);
+    newDeck.cards = [...this.cards];
+    // copy over any other properties if necessary
+    return newDeck;
+  }
   private initializeDeck(deckCount: number): void {
     for (let deckIndex = 0; deckIndex < deckCount; deckIndex++) {
       for (const suit of SUITS) {
@@ -26,9 +37,12 @@ export class Deck {
       const j = Math.floor(Math.random() * (i + 1));
       [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
     }
+    Deck.shuffleCount++;
+    console.log(`Shuffling count: ${Deck.shuffleCount}`);
   }
 
   public dealCard(): Card | null {
+    console.log("dealt card");
     return this.cards.pop() || null;
   }
 

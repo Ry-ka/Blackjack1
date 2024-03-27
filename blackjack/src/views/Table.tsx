@@ -11,6 +11,7 @@ interface TableProps {
   dealerTotal?: number;
   playerTotal?: number;
   message?: string;
+  bet?: number;
 }
 
 const Table: React.FC<TableProps> = ({
@@ -18,13 +19,16 @@ const Table: React.FC<TableProps> = ({
   playerCards,
   dealerTotal,
   playerTotal,
-  message
+  message,
+  bet
+
+  
 }) => {
   return (
     <div className="table">
       <DealerArea cards={dealerCards} total={dealerTotal} message={message} />
       {/* Other table elements like the title or a message */}
-      <PlayerArea cards={playerCards} total={playerTotal} />
+      <PlayerArea cards={playerCards} total={playerTotal} bet={bet} />
     </div>
   );
 };

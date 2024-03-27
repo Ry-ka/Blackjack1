@@ -74,13 +74,16 @@ export class Player {
   win(handIndex: number): void {
     // 1:1 payout
     const winnings = this.hands[handIndex].bet * 2;
+    console.log("Won!");
+    console.log(winnings);
     this.currentBalance += winnings;
     // Optionally clear the bet after winning
     this.hands[handIndex].bet = 0;
   }
 
-  lose(): void {
+  lose(handIndex: number): void {
     // do nothing as the amount is already deducted
+    this.hands[handIndex].bet = 0;
   }
 
   push(handIndex: number): void {
@@ -88,6 +91,15 @@ export class Player {
     const bet = this.hands[handIndex].bet;
     this.currentBalance += bet;
     // Optionally clear the bet after push
+    this.hands[handIndex].bet = 0;
+  }
+
+  blackjack(handIndex: number) : void {
+    // 2:1 payout
+    const winnings = this.hands[handIndex].bet * 3; 
+    console.log("Blacjack!");
+    this.currentBalance += winnings;
+    // Optionally clear the bet after winning
     this.hands[handIndex].bet = 0;
   }
 }

@@ -27,3 +27,11 @@
   grid-area: controls;
   /* Styles for the game controls */
 }
+
+.bet-amount {
+  color: white;
+}
+
+.current-balance {
+  color: white;
+}
