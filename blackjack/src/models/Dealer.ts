@@ -56,4 +56,40 @@ export class Dealer {
   getHand(): Card[] {
     return this.hand;
   }
+
+  calculateVisibleHandValue() {
+    let value = 0;
+    let aces = 0;
+
+    for (const card of this.hand) {
+      if (card.isVisible) {
+        if (card.value === 'A') {
+          aces += 1;
+        } else if (['J', 'Q', 'K'].includes(card.value)) {
+          value += 10;
+        } else {
+          value += parseInt(card.value);
+        }
+      }
+    }
+  
+    // taking into account the value of aces
+    for (let i = 0; i< aces; i++) {
+      if (value + 11 <= 21) {
+        value += 11;
+      } else {
+        value += 1;
+      }
+    }
+
+    return value;
+  }
+
+  hasBlackjack(): boolean {
+    if (this.hand.length === 2) {
+      const total = this.calculateHandValue();
+      return total === 21;
+    }
+    return false;
+  }
 }

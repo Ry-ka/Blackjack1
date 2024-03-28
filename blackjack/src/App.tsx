@@ -35,10 +35,17 @@ const App: React.FC = () => {
     isPlayerTurnActive: false
   });
   const [betSliderValue, setBetSliderValue] = useState<number>(15);
-
+  const [isRoundActive, setIsRoundActive] = useState(true);
+  const [message, setMessage] = useState('');
+  const [canDoubleDown, setCanDoubleDown] = useState(false);
 
   const handlePlayerAction = (action: PlayerAction) => {
-    game.playerAction(action);
+    const outcomeMessage = game.playerAction(action);
+    if (action === 'double') {
+      setCanDoubleDown(false); // The player cannot double down again in the same hand
+      setIsRoundActive(false); // The round becomes inactive after doubling down
+      setGameState(prevGameState => ({ ...prevGameState, isPlayerTurnActive: false }));
+    }
 
     setGame(prevGame => {
         // Clone the game state to ensure immutability
@@ -63,11 +70,14 @@ const App: React.FC = () => {
             }],
             dealerHand: [...newGame.dealer.getHand()],
             playerTotal: newGame.players[newGame.currentPlayerIndex].calculateHandTotal(0),
-            dealerTotal: newGame.dealer.calculateHandValue(),
+            dealerTotal: newGame.dealer.calculateVisibleHandValue(),
             isPlayerTurnActive: !newGame.players[newGame.currentPlayerIndex].hasBusted(0)
         };
-
+        setMessage(outcomeMessage);
         setGameState(updatedGameState);
+        if (action !== 'doubleDown') { // If it's not a double down action, set to false
+          setCanDoubleDown(false);
+        }
 
         if (!updatedGameState.isPlayerTurnActive || action === 'stand') {
             if (newGame.currentPlayerIndex >= newGame.players.length - 1) {
@@ -79,7 +89,8 @@ const App: React.FC = () => {
 
         return newGame;
     });
-};
+  };
+
 
 
 const submitBet = () => {
@@ -87,15 +98,15 @@ const submitBet = () => {
       // Clone the previous game state to ensure immutability
       const newGame = new Game(prevGame.players.length, prevGame.players[0].currentBalance, false);
       newGame.deck = prevGame.deck.clone();
-      newGame.players[0].hands[0].bet = prevGame.players[0].hands[0].bet;
 
+      newGame.players.forEach(player => player.clearHands());
       const currentPlayer = newGame.players[0];
+      currentPlayer.placeBet(betSliderValue, 0); // Place the new bet
 
       if (betSliderValue <= currentPlayer.currentBalance && betSliderValue >= 15) {
-          currentPlayer.placeBet(betSliderValue, 0);
-
           try {
               newGame.startNewRound();
+              setCanDoubleDown(newGame.players[0].hands[0].cards.length === 2);
 
               // Calculate the new state after starting a new round
               const updatedGameState = {
@@ -105,13 +116,26 @@ const submitBet = () => {
                 }],
                 dealerHand: [...newGame.dealer.getHand()],
                 playerTotal: newGame.players[newGame.currentPlayerIndex].calculateHandTotal(0),
-                dealerTotal: newGame.dealer.calculateHandValue(),
+                dealerTotal: newGame.dealer.calculateVisibleHandValue(),
                 isPlayerTurnActive: true
               };
 
               // Update the gameState with the new values
               setGameState(updatedGameState);
+              setMessage('');
+              setIsRoundActive(true);
 
+              if (newGame.dealer.hasBlackjack() && newGame.players[0].hasBlackjack(0)) {
+                setMessage('Push! Both you and the dealer have blackjack!');
+                setIsRoundActive(false);
+              } else if (newGame.dealer.hasBlackjack()) {
+                setMessage('Dealer has blackjack! You lose.');
+                setIsRoundActive(false);
+              } else if (newGame.players[0].hasBlackjack(0)) {
+                setMessage('You have blackjack! You win!');
+                setIsRoundActive(false);
+              }
+    
               return newGame;
           } catch (error) {
               console.error(error);
@@ -145,7 +169,7 @@ const submitBet = () => {
       })),
       dealerHand: [...game.dealer.getHand()],
       playerTotal: currentPlayer.calculateHandTotal(0),
-      dealerTotal: game.dealer.calculateHandValue(),
+      dealerTotal: game.dealer.calculateVisibleHandValue(),
       isPlayerTurnActive: !currentPlayer.hasBusted(0) && currentPlayer.hands[0].cards.length > 0
     };
 
@@ -160,6 +184,7 @@ const submitBet = () => {
         dealerTotal={gameState.dealerTotal}
         playerTotal={gameState.playerTotal}
         bet = {gameState.playerHands[0].bet}
+        message={message}
       />
       <div className="playerInteraction">
         <div className="bettingControls">
@@ -173,7 +198,7 @@ const submitBet = () => {
           />
           <p className="bet-amount">Bet Amount: ${betSliderValue}</p>
           <button onClick={submitBet}>Submit Bet</button>
-          <Controls onPlayerAction={handlePlayerAction} isPlayerTurnActive={gameState.isPlayerTurnActive}/>
+          <Controls onPlayerAction={handlePlayerAction} isPlayerTurnActive={gameState.isPlayerTurnActive && isRoundActive} canDoubleDown={canDoubleDown}/>
         </div>
       </div>
     </div>

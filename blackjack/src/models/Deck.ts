@@ -2,7 +2,6 @@ import { Card, Value, Suit, VALUES, SUITS } from "../types/CardType"
 
 export class Deck {
   public cards: Card[];
-  static shuffleCount: number = 0;
 
   constructor(deckCount: number = 6, shouldShuffle: boolean = true) {
     this.cards = [];
@@ -37,8 +36,6 @@ export class Deck {
       const j = Math.floor(Math.random() * (i + 1));
       [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
     }
-    Deck.shuffleCount++;
-    console.log(`Shuffling count: ${Deck.shuffleCount}`);
   }
 
   public dealCard(): Card | null {

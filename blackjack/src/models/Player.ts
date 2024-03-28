@@ -67,6 +67,8 @@ export class Player {
     }
   }
 
+  
+
   public updateBalance(amount: number): void {
     this.currentBalance += amount;
   }
@@ -77,7 +79,7 @@ export class Player {
     console.log("Won!");
     console.log(winnings);
     this.currentBalance += winnings;
-    // Optionally clear the bet after winning
+
     this.hands[handIndex].bet = 0;
   }
 
@@ -96,10 +98,20 @@ export class Player {
 
   blackjack(handIndex: number) : void {
     // 2:1 payout
-    const winnings = this.hands[handIndex].bet * 3; 
-    console.log("Blacjack!");
-    this.currentBalance += winnings;
-    // Optionally clear the bet after winning
+    const originalBet = this.hands[handIndex].bet;
+    const winnings = originalBet * 1.5; 
+    console.log("Blackjack!");
+    this.currentBalance += (originalBet + winnings);
+
     this.hands[handIndex].bet = 0;
+  }
+
+  hasBlackjack(handIndex: number): boolean {
+    const hand = this.hands[handIndex];
+    if (hand.cards.length === 2) {
+      const total = this.calculateHandTotal(handIndex);
+      return total === 21;
+    }
+    return false;
   }
 }

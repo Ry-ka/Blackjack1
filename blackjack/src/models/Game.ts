@@ -79,6 +79,32 @@
       if (this.dealer.hand[1]) {
         this.dealer.hand[1].isVisible = false;
       }
+
+      //check for blackjack
+      this.players.forEach(player => {
+        if (player.hasBlackjack(0)) {
+          console.log("Blackjack!");
+          if (!this.dealer.hasBlackjack()) {
+            player.blackjack(0);
+          } else {
+            player.push(0);
+          }
+        }
+      });
+
+      if (this.dealer.hasBlackjack()) {
+        console.log("dealer blackjack");
+        if (this.dealer.hand[1]) {
+          this.dealer.hand[1].isVisible = true;
+        }
+        this.players.forEach(player => {
+          if (player.hasBlackjack(0)) {
+            player.push(0);
+          } else {
+            player.lose(0);
+          }
+        })
+      }
     }
 
     updateState(newPlayerBalance: number[]): void {
@@ -87,7 +113,7 @@
 
 
 
-    public playerAction(action: PlayerAction): void {
+    public playerAction(action: PlayerAction): string {
       const player = this.players[this.currentPlayerIndex];
     
       switch(action) {
@@ -99,31 +125,53 @@
             // Optionally, check if player has busted
 
             if (player.hasBusted(0)) { //replace the 0 with the actual hand index when implementing splitting
-              this.moveToNextPlayer();
-              return;
+              return this.moveToNextPlayer();
             }
           } else {
             // Handle no more cards in the deck
+            return "";
           }
+          break;
         }
-          break;
         case 'stand':
-          this.moveToNextPlayer();
-          break;
-        // Additional cases for double, split, surrender
+          return this.moveToNextPlayer();
+        case 'double':
+          if (this.canDoubleDown(this.currentPlayerIndex)) {
+            const doubleBet = player.hands[0].bet;
+            if (player.currentBalance >= doubleBet) {
+              player.currentBalance -= doubleBet;
+              player.hands[0].bet += doubleBet;
+
+              // Deal one more card and end the player's turn\
+              const newCard = this.deck.dealCard();
+              if (newCard) {
+                newCard.isVisible = true;
+                player.addCardToHand(newCard, 0);
+              }
+              return this.moveToNextPlayer();
+            } else {
+              return "Not enough balance to double down.";
+            }
+          } else {
+            return "cannot double down at this time."; // should never reach this if button is disabled and enabled correctly.
+          }
+        // Additional cases for split, surrender
       }
+
+      return "";
     }
 
-    public moveToNextPlayer(): void {
+    public moveToNextPlayer(): string {
       // Move to the next player; if last player, dealer's turn
       if (this.currentPlayerIndex < this.players.length - 1) {
         this.currentPlayerIndex++;
+        return "next player's turn"
       } else {
-        this.handleDealerTurn();
+        return this.handleDealerTurn();
       }
     }
 
-    public handleDealerTurn(): void {
+    public handleDealerTurn(): string {
       // Reveal dealer's second card
       if (this.dealer.hand[1]) {
         this.dealer.hand[1].isVisible = true;
@@ -138,24 +186,28 @@
         }
       }
       // Then determine the outcome of the round
-      this.determineOutcome();
+      return this.determineOutcome();
     }
 
-    private determineOutcome(): void {
+    private determineOutcome(): string {
       const dealerTotal = this.dealer.calculateHandValue();
-
+      let message = '';
       this.players.forEach(player => {
         // Assuming each player has only one hand at index 0
         const playerTotal = player.calculateHandTotal(0);
 
         if (playerTotal > 21) {
           player.lose(0); // Lose doesn't need the bet amount
+          message = 'Bust you lose!';
         } else if (dealerTotal > 21 || playerTotal > dealerTotal) {
           player.win(0); // Win uses the bet from the hand at index 0
+          message = 'You win!';
         } else if (playerTotal < dealerTotal) {
           player.lose(0); // Lose doesn't need the bet amount
+          message = 'You lose!';
         } else {
           player.push(0); // Push uses the bet from the hand at index 0
+          message = 'Push!';
         }
       });
 
@@ -163,6 +215,13 @@
         player.hasPlacedBet = false;
       });
 
+      return message;
+    }
+    
+    canDoubleDown(playerIndex: number): boolean {
+      const player = this.players[playerIndex];
+      const isFirstMove = player.hands[0].cards.length === 2;
+      return isFirstMove;
     }
 
     // Additional methods for handling game rules, payouts, etc.
